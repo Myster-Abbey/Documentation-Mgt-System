@@ -11,13 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('documents', function (Blueprint $table) {
+        Schema::create('download_requests', function (Blueprint $table) {
             $table->id();
-            $table->string('title');
-            $table->text('description')->nullable();
-            $table->string('file_path');
-            $table->foreignId('uploaded_by')->constrained('users');
+            $table->foreignId('file_id')->constrained('documents');
+            $table->foreignId('user_id')->constrained('users');
+            $table->enum('status', ['pending', 'approved', 'rejected', 'archived'])->default('pending');
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 
@@ -26,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('documents');
+        Schema::dropIfExists('download_requests');
     }
 };

@@ -11,7 +11,6 @@ return new class extends Migration
      */
     public function up(): void
     {
-        //
         Schema::create('audit_logs', function (Blueprint $table) {
             $table->integer('user_id')->nullable();
             $table->string('action');

@@ -32,9 +32,7 @@ class DocumentManager extends Controller
             'description' => 'nullable|string'
         ]);
 
-        // return 'dsdddf';
         if ($validator->fails()) {
-            // return General::apiFailureResponse('hhhhhhhh', 422);
             return General::apiFailureResponse($validator->errors()->first(), 422);
         }
 
@@ -80,12 +78,30 @@ class DocumentManager extends Controller
         }
     }
 
-    public function print($id) {
+    public function print(Request $request, $id) {
         try {
             $document = Document::findOrFail($id);
 
-            if (!auth()->user()->is_admin) {
-                return General::apiFailureResponse('Unauthorized access', 403);
+            // if (!auth()->user()->is_admin) {
+            //     return General::apiFailureResponse('Unauthorized access', 403);
+            // }
+            $user = User::query()->find($request->user_id);
+            $role = null;
+            if ($user) {
+                $role = $user->role;
+            }
+
+            if (strtolower($role) != 'admin') {
+                return General::apiFailureResponse('You do not have permission', 401);
+            }
+            $user = User::query()->find($request->user_id);
+            $role = null;
+            if ($user) {
+                $role = $user->role;
+            }
+
+            if (strtolower($role) != 'admin') {
+                return General::apiFailureResponse('You do not have permission', 401);
             }
 
             AuditLog::create([

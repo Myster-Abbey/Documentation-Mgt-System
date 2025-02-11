@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DocumentManager;
+use App\Http\Controllers\DownloadRequestManager;
 use App\helper\General;
 use Illuminate\Support\Facades\Route;
 
@@ -31,6 +32,16 @@ Route::post('/verify-account', [AuthController::class, 'verifyAccount']);
     // Route::middleware(['admin'])->group(function () {
         Route::post('/documents', [DocumentManager::class, 'upload']);
         Route::get('/documents/{id}/print', [DocumentManager::class, 'print']);
+    // });
+
+    // Download request routes
+    // Route::prefix('download-requests')->group(function () {
+        Route::get('download-requests/', [DownloadRequestManager::class, 'index']);
+        Route::post('download-requests/', [DownloadRequestManager::class, 'store']);
+        Route::get('download-requests/{id}', [DownloadRequestManager::class, 'show']);
+        Route::put('download-requests/{id}', [DownloadRequestManager::class, 'update']);
+        Route::put('download-requests/{id}/archive', [DownloadRequestManager::class, 'archive']);
+        Route::delete('download-requests/{id}', [DownloadRequestManager::class, 'cancel']);
     // });
 // });
 
