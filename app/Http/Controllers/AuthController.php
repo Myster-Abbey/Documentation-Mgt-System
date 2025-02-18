@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
+use App\Mail\OtpMail;
 
 class AuthController extends Controller
 {
@@ -79,10 +80,9 @@ class AuthController extends Controller
 
     public function create(Request $request)
     {
-        // return 'hello';
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
-            'email' => 'required|email|ends_with:@gwosevo.com|unique:users,email',
+            'email' => 'required|email|unique:users,email',
             'phone_number' => 'required|string|unique:users,phone_number',
             'password' => 'required|min:8'
         ]);
@@ -105,24 +105,30 @@ class AuthController extends Controller
                 'action' => 'Account Created'
             ]);
 
+            // Generate and send OTP
+            $otp = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
+
+            // Store OTP in user record
+            $user->update([
+                'otp' => Hash::make($otp),
+                'otp_expires_at' => now()->addMinutes(10)
+            ]);
+
+            // Send OTP email
+            Mail::to($user->email)->send(new OtpMail($otp, $user));
+
             return response()->json([
                 'success' => true,
-                'message' => 'Account created successfully',
+                'message' => 'Account created successfully. Please check your email for verification code.',
                 'data' => $user
             ], 201);
 
         } catch (\Throwable $th) {
             Log::info("USER-CREATE-ERROR: " . $th->getMessage());
-           return General::apiFailureResponse('Error occurred', 500);
+            return General::apiFailureResponse('Error occurred', 500);
         }
     }
 
-    // public function sendOtp(Request $request) {
-    //     // OTP sending logic
-    //     $otp = rand(100000, 999999);
-    //     Mail::to($request->email)->send(new OtpMail($otp));
-    //     return response()->json(['message' => 'OTP sent']);
-    // }
 
     public function sendOtp(Request $request)
     {
@@ -136,36 +142,27 @@ class AuthController extends Controller
 
         try {
             $user = User::where('email', $request->email)->first();
+
+            // Check if previous OTP hasn't expired yet
+            if ($user->otp_expires_at && now()->lt($user->otp_expires_at)) {
+                return General::apiFailureResponse('Please wait before requesting a new OTP', 429);
+            }
+
             $otp = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
 
             // Store OTP in user record
             $user->update([
-                'otp' => $otp,
-                'otp_expires_at' => now()->addMinutes(10) // OTP valid for 10 minutes
+                'otp' => Hash::make($otp),
+                'otp_expires_at' => now()->addMinutes(10)
             ]);
 
             // Send OTP email
-            Mail::send('emails.otp', [
-                'user' => $user,
-                'otp' => $otp
-            ], function($message) use ($user) {
-                $message->to($user->email)
-                        ->subject('Your OTP Code');
-            });
+            Mail::to($user->email)->send(new OtpMail($otp, $user));
 
-            AuditLog::create([
-                'user_id' => $user->id,
-                'action' => 'OTP Sent'
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'OTP has been sent to your email'
-            ]);
-
-        } catch (\Throwable $th) {
-            Log::info("OTP-SEND-ERROR: " . $th->getMessage());
-            return General::apiFailureResponse('Error sending OTP', 500);
+            return General::apiSuccessResponse('OTP sent successfully', 200);
+        } catch (\Exception $e) {
+            Log::error('OTP Send Error: ' . $e->getMessage());
+            return General::apiFailureResponse('Failed to send OTP. Please try again later.', 500);
         }
     }
 }
