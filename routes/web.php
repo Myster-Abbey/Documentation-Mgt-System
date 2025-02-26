@@ -22,10 +22,10 @@ Route::get('/', function () {
 // });
 
 // Add this route for testing
-Route::get('/email/preview', function () {
-    $user = new stdClass();
-    $user->name = 'Test User';
-    $otp = '123456';
+// Route::get('/email/preview', function () {
+//     $user = new stdClass();
+//     $user->name = 'Test User';
+//     $otp = '123456';
 
-    return view('emails.otp', compact('user', 'otp'));
-});
+//     return view('emails.otp', compact('user', 'otp'));
+// });

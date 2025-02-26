@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DocumentManager;
 use App\Http\Controllers\DownloadRequestManager;
 use App\helper\General;
+use App\Http\Controllers\apiCaller;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -44,6 +45,7 @@ Route::post('/verify-account', [AuthController::class, 'verifyAccount']);
         Route::delete('download-requests/{id}', [DownloadRequestManager::class, 'cancel']);
     // });
 // });
+
 
 // Fallback for undefined routes
 Route::fallback(function () {

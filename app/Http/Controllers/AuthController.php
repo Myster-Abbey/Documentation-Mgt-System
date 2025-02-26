@@ -76,13 +76,65 @@ class AuthController extends Controller
 
     public function verifyAccount(Request $request)
     {
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email|ends_with:@gwosevo.com|exists:users,email',
+            'otp' => 'required|digits:6',
+        ]);
+
+        if ($validator->fails()) {
+            return General::apiFailureResponse($validator->errors()->first(), 401);
+        }
+
+        try {
+            $user = User::where('email', $request->email)->first();
+
+            // Check if OTP has expired
+            if (!$user->otp_expires_at || now()->gt($user->otp_expires_at)) {
+                return General::apiFailureResponse('OTP has expired. Please request a new one.', 401);
+            }
+
+            // Verify OTP
+            if (!Hash::check($request->otp, $user->otp)) {
+                AuditLog::create([
+                    'user_id' => $user->id,
+                    'action' => 'Account Verification Failed'
+                ]);
+                return General::apiFailureResponse('Invalid OTP', 401);
+            }
+
+            // Update user verification status
+            $user->update([
+                'email_verified_at' => now(),
+                'otp' => null,
+                'otp_expires_at' => null
+            ]);
+
+            AuditLog::create([
+                'user_id' => $user->id,
+                'action' => 'Account Verified'
+            ]);
+
+            // Generate auth token for automatic login
+            $token = $user->createToken('authToken')->plainTextToken;
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Account verified successfully',
+                'token' => $token,
+                'data' => $user
+            ], 200);
+
+        } catch (\Exception $e) {
+            Log::error('Account Verification Error: ' . $e->getMessage());
+            return General::apiFailureResponse('Failed to verify account. Please try again later.', 500);
+        }
     }
 
     public function create(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
+            'email' => 'required|email|ends_with:@gwosevo.com|unique:users,email',
             'phone_number' => 'required|string|unique:users,phone_number',
             'password' => 'required|min:8'
         ]);
