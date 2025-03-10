@@ -11,14 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('download_requests', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('file_id')->constrained('documents');
-            $table->foreignId('user_id')->constrained('users');
-            $table->enum('status', ['pending', 'approved', 'rejected', 'archived'])->default('pending');
-            $table->timestamps();
-            $table->softDeletes();
-        });
+        // Schema::create('download_requests', function (Blueprint $table) {
+        //     $table->id();
+        //     $table->foreignId('file_id')->constrained('documents');
+        //     $table->foreignId('user_id')->constrained('users');
+        //     $table->enum('status', ['pending', 'approved', 'rejected', 'archived'])->default('pending');
+        //     $table->timestamps();
+        //     $table->softDeletes();
+        // });
     }
 
     /**

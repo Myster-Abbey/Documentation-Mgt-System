@@ -10,14 +10,23 @@ class Document extends Model
     use HasFactory;
 
     protected $fillable = [
-        'title',
-        'description',
+        'name',
         'file_path',
         'uploaded_by'
     ];
 
-    public function uploader()
+
+    // Relation to get the user who uploaded the document
+    public function uploadedBy()
     {
         return $this->belongsTo(User::class, 'uploaded_by');
+    }
+
+    public function users()
+    {
+        // return $this->belongsToMany(User::class, 'document_requests')
+        //             ->withPivot('status')
+        //             ->withTimestamps();
+        return $this->belongsToMany(User::class,);
     }
 }
